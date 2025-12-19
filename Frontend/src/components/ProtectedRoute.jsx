@@ -5,11 +5,25 @@ import { useAuth } from "../context/AuthContext";
 const ProtectedRoute = ({ children, role }) => {
   const { user, loading } = useAuth();
 
-  if (loading) return <div>Loading...</div>;
+  // While checking auth
+  if (loading) {
+    return <div style={{ textAlign: "center", marginTop: "2rem" }}>Loading...</div>;
+  }
 
-  if (!user) return <Navigate to="/login" />;
+  // Not logged in
+  if (!user || !user.role) {
+    return <Navigate to="/login" replace />;
+  }
 
-  if (role && user.role !== role) return <Navigate to="/login" />;
+  // Role mismatch → redirect to proper dashboard
+  if (role && user.role !== role) {
+    return (
+      <Navigate
+        to={user.role === "admin" ? "/admin" : "/taketest"}
+        replace
+      />
+    );
+  }
 
   return children;
 };

@@ -1,26 +1,37 @@
 import React, { useState } from "react";
-import axios from "axios";
 import { useAuth } from "../context/AuthContext";
 
 const CreateStudent = () => {
-  const { user } = useAuth();
+  const { api } = useAuth();
   const [rollNo, setRollNo] = useState("");
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    if (!rollNo.trim() || !password.trim()) {
+      setMsg("Roll Number and Password are required.");
+      return;
+    }
+
+    setLoading(true);
+    setMsg("");
+
     try {
-      const res = await axios.post(
-        "http://localhost:5000/api/admin/create-student",
-        { rollNo, password },
-        { headers: { Authorization: `Bearer ${user.token}` } }
-      );
-      setMsg(res.data.message);
+      const res = await api.post("/admin/create-student", {
+        rollNo: rollNo.trim(),
+        password: password.trim(),
+      });
+
+      setMsg(res.data.message || "Student created successfully!");
       setRollNo("");
       setPassword("");
     } catch (err) {
-      setMsg(err.response?.data?.message || "Error");
+      setMsg(err.response?.data?.message || "Error creating student");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -37,12 +48,15 @@ const CreateStudent = () => {
         />
         <input
           className="form-control mb-2"
+          type="password"
           placeholder="Password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           required
         />
-        <button className="btn btn-primary">Create</button>
+        <button className="btn btn-primary" disabled={loading}>
+          {loading ? "Creating..." : "Create"}
+        </button>
       </form>
       {msg && <p className="mt-2">{msg}</p>}
     </div>

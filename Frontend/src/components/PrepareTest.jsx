@@ -1,76 +1,75 @@
-import React, { useState, useEffect } from "react";
-import "bootstrap/dist/css/bootstrap.min.css"; // Import Bootstrap
+import React, { useState } from "react";
+import "bootstrap/dist/css/bootstrap.min.css";
 import { useAuth } from "../context/AuthContext";
 import { useNavigate } from "react-router-dom";
-
-import axios from "axios";
 
 const PrepareTest = () => {
   const [question, setQuestion] = useState("");
   const [options, setOptions] = useState(["", "", "", ""]);
   const [correctAnswer, setCorrectAnswer] = useState("");
-  const [questions, setQuestions] = useState([]);
-  const { user } = useAuth();
+  const [loading, setLoading] = useState(false);
 
-  useEffect(() => {
-    const storedData = JSON.parse(localStorage.getItem("testQuestions")) || [];
-    setQuestions(storedData);
-  }, []);
+  const { api, logout } = useAuth();
+  const navigate = useNavigate();
 
+  // Admin logout
+  const handleLogout = () => {
+    logout();
+    navigate("/login");
+  };
+
+  // Handle options
   const handleOptionChange = (index, value) => {
     setOptions((prev) => {
-      const newOptions = [...prev];
-      newOptions[index] = value;
-      return newOptions;
+      const updated = [...prev];
+      updated[index] = value;
+      return updated;
     });
   };
 
+  // Submit question to backend
   const handleSubmit = async (e) => {
-  e.preventDefault();
+    e.preventDefault();
 
-  await axios.post(
-    "http://localhost:5000/api/questions",
-    { question, options, correctAnswer },
-    {
-      headers: { Authorization: `Bearer ${user.token}` },
+    if (!question || options.some((o) => !o) || !correctAnswer) {
+      alert("Please fill all fields");
+      return;
     }
-  );
 
-  setQuestion("");
-  setOptions(["", "", "", ""]);
-  setCorrectAnswer("");
-};
+    setLoading(true);
 
-  // const handleSubmit = (e) => {
-  //   e.preventDefault();
-  //   const newQuestion = { question, options, correctAnswer };
-  //   const updatedQuestions = [...questions, newQuestion];
-  //   localStorage.setItem("testQuestions", JSON.stringify(updatedQuestions));
-  //   setQuestions(updatedQuestions);
-  //   setQuestion("");
-  //   setOptions(["", "", "", ""]);
-  //   setCorrectAnswer("");
-  // };
- 
+    try {
+      await api.post("/questions", {
+        question,
+        options,
+        correctAnswer,
+      });
 
+      alert("Question added successfully");
 
-
-const { logout } = useAuth();
-const navigate = useNavigate();
-
-const handleLogout = () => {
-  logout();
-  navigate("/login");
-};
+      setQuestion("");
+      setOptions(["", "", "", ""]);
+      setCorrectAnswer("");
+    } catch (error) {
+      alert("Error adding question");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div className="container mt-5">
-      <h1 className="text-center mb-4">Prepare Test</h1>
-      <div className="card p-4 shadow-lg">
+      <div className="d-flex justify-content-between align-items-center mb-4">
+        <h1>Prepare Test (Admin)</h1>
+        <button onClick={handleLogout} className="btn btn-danger">
+          Logout
+        </button>
+      </div>
+
+      <div className="card p-4 shadow">
         <form onSubmit={handleSubmit}>
-          <button onClick={handleLogout} className="btn btn-danger">Logout</button>
           <div className="mb-3">
-            <label className="form-label fw-bold">Enter Question</label>
+            <label className="form-label fw-bold">Question</label>
             <textarea
               className="form-control"
               value={question}
@@ -78,18 +77,20 @@ const handleLogout = () => {
               required
             />
           </div>
-          {[...Array(4)].map((_, i) => (
+
+          {options.map((opt, i) => (
             <div className="mb-3" key={i}>
               <label className="form-label">Option {i + 1}</label>
               <input
                 type="text"
                 className="form-control"
-                value={options[i]}
+                value={opt}
                 onChange={(e) => handleOptionChange(i, e.target.value)}
                 required
               />
             </div>
           ))}
+
           <div className="mb-3">
             <label className="form-label fw-bold">Correct Answer</label>
             <input
@@ -100,27 +101,16 @@ const handleLogout = () => {
               required
             />
           </div>
-          <button type="submit" className="btn btn-primary w-50">
-            Submit Question
+
+          <button
+            type="submit"
+            className="btn btn-primary w-50"
+            disabled={loading}
+          >
+            {loading ? "Saving..." : "Submit Question"}
           </button>
         </form>
       </div>
-
-      <h2 className="text-center mt-5">Test Questions</h2>
-      <ul className="list-group mt-3">
-        {questions.map((item, index) => (
-          <li className="list-group-item" key={index}>
-            <strong>Q{index + 1}:</strong> {item.question}
-            <ul className="mt-2">
-              {item.options.map((option, i) => (
-                <li key={i}>{option}</li>
-              ))}
-            </ul>
-            <strong className="text-success">Correct Answer:</strong>{" "}
-            {item.correctAnswer}
-          </li>
-        ))}
-      </ul>
     </div>
   );
 };

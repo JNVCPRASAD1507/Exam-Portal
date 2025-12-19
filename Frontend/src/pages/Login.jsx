@@ -9,22 +9,31 @@ const Login = () => {
 
   const [rollNo, setRollNo] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("student"); // default role
+  const [role, setRole] = useState("admin");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setError("");
+    setLoading(true);
+
     try {
-      // Call your backend login API
-      const userData = await login({ rollNo: Number(rollNo), password });
+      const userData = await login({
+        rollNo,       // KEEP STRING
+        password,
+        role,         // IMPORTANT
+      });
 
       if (userData.role === "admin") {
-        navigate("/preparetest");
-      } else if (userData.role === "student") {
+        navigate("/admin");
+      } else {
         navigate("/taketest");
       }
     } catch (err) {
       setError("Invalid Roll Number or Password");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -39,7 +48,6 @@ const Login = () => {
         <Box sx={{ display: "flex", justifyContent: "center", mb: 3 }}>
           <Button
             variant={role === "admin" ? "contained" : "outlined"}
-            color="primary"
             onClick={() => setRole("admin")}
             sx={{ mr: 2 }}
           >
@@ -47,7 +55,6 @@ const Login = () => {
           </Button>
           <Button
             variant={role === "student" ? "contained" : "outlined"}
-            color="secondary"
             onClick={() => setRole("student")}
           >
             Student
@@ -63,6 +70,7 @@ const Login = () => {
             value={rollNo}
             onChange={(e) => setRollNo(e.target.value)}
           />
+
           <TextField
             label="Password"
             type="password"
@@ -74,13 +82,20 @@ const Login = () => {
           />
 
           {error && (
-            <Typography color="error" mt={1} mb={1}>
+            <Typography color="error" mt={1}>
               {error}
             </Typography>
           )}
 
-          <Button type="submit" variant="contained" color="success" fullWidth sx={{ mt: 2 }}>
-            Login as {role.charAt(0).toUpperCase() + role.slice(1)}
+          <Button
+            type="submit"
+            variant="contained"
+            color="success"
+            fullWidth
+            sx={{ mt: 2 }}
+            disabled={loading}
+          >
+            {loading ? "Logging in..." : `Login as ${role}`}
           </Button>
         </form>
       </Box>
@@ -89,4 +104,3 @@ const Login = () => {
 };
 
 export default Login;
-

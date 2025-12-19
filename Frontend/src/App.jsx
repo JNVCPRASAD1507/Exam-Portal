@@ -1,5 +1,5 @@
 import React from "react";
-import {Router, Routes, Route } from "react-router-dom";
+import {Routes, Route } from "react-router-dom";
 import PrepareTest from "./components/PrepareTest";
 import TakeTest from "./components/TakeTest";
 import Login from "./pages/Login";
