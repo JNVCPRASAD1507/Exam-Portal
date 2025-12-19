@@ -1,26 +1,43 @@
-import express from"express";
-import Result from"../models/Result.js";
-import auth from"../middleware/auth.js";
+import express from "express";
+import auth from "../middleware/auth.js";
+import Result from "../models/Result.js";
 
 const router = express.Router();
 
-// Student submits exam result
+/**
+ * STUDENT → SUBMIT TEST
+ */
 router.post("/submit", auth(["student"]), async (req, res) => {
   try {
-    const { score, total, correct, incorrect, notAttempted } = req.body;
+    const { correct, wrong, notAttempted, total } = req.body;
 
-    const result = await Result.create({
-      studentRollNo: req.user.id,
-      score,
-      total,
+    if (
+      correct === undefined ||
+      wrong === undefined ||
+      notAttempted === undefined ||
+      total === undefined
+    ) {
+      return res.status(400).json({ message: "Missing result data" });
+    }
+
+    const result = new Result({
+      student: req.user._id,
       correct,
-      incorrect,
+      wrong,
       notAttempted,
+      total,
+      score: correct,
     });
 
-    res.json({ message: "Result saved", result });
+    await result.save();
+
+    res.status(201).json({
+      message: "Test submitted successfully",
+      result,
+    });
   } catch (error) {
-    res.status(500).json({ message: "Error saving result" });
+    console.error("Submit Error:", error);
+    res.status(500).json({ message: "Server error" });
   }
 });
 

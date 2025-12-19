@@ -1,14 +1,19 @@
-// models/Result.js
 import mongoose from "mongoose";
 
-const resultSchema = new mongoose.Schema({
-  studentRollNo: String,
-  score: Number,
-  total: Number,
-  correct: Number,
-  incorrect: Number,
-  notAttempted: Number,
-  createdAt: { type: Date, default: Date.now },
-});
+const resultSchema = new mongoose.Schema(
+  {
+    student: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    correct: Number,
+    wrong: Number,
+    notAttempted: Number,
+    total: Number,
+    score: Number,
+  },
+  { timestamps: true }
+);
 
 export default mongoose.model("Result", resultSchema);
